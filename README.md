@@ -1,39 +1,112 @@
 # Predicateable
 
-TODO: Delete this and the text below, and describe your gem
+**Predicateable** is a Ruby mixin that dynamically defines predicate methods (like `admin?`, `young?`) based on the return value of a method. It's ideal for cleanly querying symbolic states without writing repetitive predicate methods.
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/predicateable`. To experiment with that code, run `bin/console` for an interactive prompt.
+## Features
+
+- Defines `?` predicate methods dynamically.
+- Supports prefixing (e.g. `account_type_admin?`).
+- `strict:` option ensures only symbols are matched.
+- Works seamlessly with `respond_to?`.
+- Pure Ruby, no dependencies.
 
 ## Installation
 
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
+Add this line to your Gemfile:
 
-Install the gem and add to the application's Gemfile by executing:
+```ruby
+gem "predicateable"
+````
 
-```bash
-bundle add UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+And run:
+
+```sh
+bundle install
 ```
 
-If bundler is not being used to manage dependencies, install the gem by executing:
+Or install it directly:
 
-```bash
-gem install UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+```sh
+gem install predicateable
 ```
 
 ## Usage
 
-TODO: Write usage instructions here
+### Basic Example
 
-## Development
+```ruby
+class User
+  include Predicateable
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+  attr_reader :age, :account_type
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+  predicate :age_group, [:young, :middle, :old]
+  predicate :account_type, [:guest, :member, :admin], prefix: true
+
+  def initialize(age:, account_type:)
+    @age = age
+    @account_type = account_type
+  end
+
+  def age_group
+    case age
+    when 0...30 then :young
+    when 30...60 then :middle
+    else :old
+    end
+  end
+end
+
+user = User.new(age: 45, account_type: :admin)
+
+user.middle?                # => true
+user.age_group              # => :middle
+user.account_type_admin?    # => true
+user.account_type_guest?    # => false
+```
+
+### Strict Mode
+
+If you want predicate checks to pass only when the method returns a **Symbol**, enable `strict: true`:
+
+```ruby
+class User
+  include Predicateable
+
+  attr_reader :role
+
+  predicate :role, [:editor, :viewer], strict: true
+
+  def initialize(role:)
+    @role = role
+  end
+end
+
+User.new(role: :editor).editor?  # => true
+User.new(role: "editor").editor? # => false (strict mode)
+```
+
+## Behavior Summary
+
+| Feature         | Description                                    |
+| --------------- | ---------------------------------------------- |
+| `prefix:`       | Adds method name prefix (e.g. `account_type_`) |
+| `strict:`       | Only matches `Symbol` values                   |
+| `respond_to?`   | Works with predicate methods                   |
+| `NoMethodError` | Raised when calling undefined predicates       |
+
+## Testing
+
+This gem uses [Minitest](https://github.com/minitest/minitest). To run tests:
+
+```sh
+bundle exec rake test
+```
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/predicateable.
+Bug reports and pull requests are welcome! If you have ideas for improvement or questions, feel free to open an issue.
 
 ## License
 
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+This project is licensed under the MIT License. See the [LICENSE.txt](LICENSE.txt) file for details.
