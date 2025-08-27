@@ -13,7 +13,8 @@ module Predicateable
         method = prefix ? "#{name}_#{value}?" : "#{value}?"
 
         define_method(method) do
-          actual = send(name)
+          # @type self: Object
+          actual = public_send(name)
 
           if strict
             actual == value
