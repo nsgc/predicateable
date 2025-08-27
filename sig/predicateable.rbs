@@ -1,4 +1,12 @@
 module Predicateable
-  VERSION: String
-  # See the writing guide of rbs: https://github.com/ruby/rbs#guides
+  def self.included: (Module base) -> void
+
+  module ClassMethods : Module
+    def predicate: (
+      Symbol | String name,
+      Array[Symbol | String] values,
+      ?prefix: bool,
+      ?strict: bool
+    ) -> Array[Symbol | String]
+  end
 end
